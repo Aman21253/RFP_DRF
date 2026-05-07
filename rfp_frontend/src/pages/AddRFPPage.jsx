@@ -20,6 +20,8 @@ export default function AddRFPPage() {
     assigned_vendors: [],
   });
 
+  const today = new Date().toISOString().split("T")[0];
+
   useEffect(() => {
     loadCategories();
   }, []);
@@ -82,6 +84,18 @@ export default function AddRFPPage() {
 
     if (!form.title || !form.last_date || !form.min_amount || !form.max_amount) {
       setError("Please fill all fields");
+      setLoading(false);
+      return;
+    }
+
+    if (new Date(form.last_date) <= new Date(today)) {
+      setError("Last date must be a future date.");
+      setLoading(false);
+      return;
+    }
+
+    if (parseFloat(form.max_amount) <= parseFloat(form.min_amount)) {
+      setError("Maximum amount must be greater than minimum amount.");
       setLoading(false);
       return;
     }
@@ -212,6 +226,7 @@ export default function AddRFPPage() {
                   value={form.last_date}
                   onChange={handleInputChange}
                   name="last_date"
+                  min={today}
                   className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
                 />
               </div>
@@ -226,6 +241,7 @@ export default function AddRFPPage() {
                   value={form.min_amount}
                   onChange={handleInputChange}
                   placeholder="0.00"
+                  min="0"
                   step="0.01"
                   className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
                 />
@@ -241,6 +257,7 @@ export default function AddRFPPage() {
                   value={form.max_amount}
                   onChange={handleInputChange}
                   placeholder="0.00"
+                  min="0"
                   step="0.01"
                   className="w-full rounded-lg border border-slate-300 px-4 py-3 outline-none focus:border-blue-500"
                 />

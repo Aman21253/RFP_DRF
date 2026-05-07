@@ -1,4 +1,7 @@
 from django.db.models import Count
+from django.utils import timezone
+from django.utils.dateparse import parse_date
+from decimal import Decimal, InvalidOperation
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import api_view, permission_classes
@@ -176,12 +179,40 @@ def admin_create_rfp_api(request):
             status=status.HTTP_400_BAD_REQUEST,
         )
 
+    parsed_date = parse_date(last_date)
+    if not parsed_date:
+        return Response(
+            {"error": "Invalid last date format."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        min_amount_value = Decimal(str(min_amount))
+        max_amount_value = Decimal(str(max_amount))
+    except (InvalidOperation, TypeError, ValueError):
+        return Response(
+            {"error": "Invalid amount format."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if max_amount_value <= min_amount_value:
+        return Response(
+            {"error": "Maximum amount must be greater than minimum amount."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    if parsed_date <= timezone.localdate():
+        return Response(
+            {"error": "Last date must be a future date."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
     rfp = RFP.objects.create(
         category=category,
         title=title,
-        last_date=last_date,
-        min_amount=min_amount,
-        max_amount=max_amount,
+        last_date=parsed_date,
+        min_amount=min_amount_value,
+        max_amount=max_amount_value,
         status="OPEN",
     )
 

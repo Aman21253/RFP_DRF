@@ -1,6 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
+from django.utils import timezone
 from .models import Category, Vendor, RFP, Quote, QuoteItem
 
 
@@ -76,6 +77,25 @@ class RFPSerializer(serializers.ModelSerializer):
     class Meta:
         model = RFP
         fields = "__all__"
+
+    def validate(self, attrs):
+        min_amount = attrs.get("min_amount")
+        max_amount = attrs.get("max_amount")
+        last_date = attrs.get("last_date")
+
+        if min_amount is not None and max_amount is not None and max_amount <= min_amount:
+            raise serializers.ValidationError({
+                "max_amount": "Maximum amount must be greater than minimum amount."
+            })
+
+        if last_date is not None:
+            today = timezone.localdate()
+            if last_date <= today:
+                raise serializers.ValidationError({
+                    "last_date": "Last date must be a future date."
+                })
+
+        return attrs
 
 
 class QuoteItemSerializer(serializers.ModelSerializer):
