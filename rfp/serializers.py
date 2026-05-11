@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate
 from django.utils import timezone
-from .models import Category, Vendor, RFP, Quote, QuoteItem
+from .models import Category, Vendor, RFP, Quote, QuoteItem, ActivityLog
 
 
 class RegisterSerializer(serializers.ModelSerializer):
@@ -110,3 +110,24 @@ class QuoteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Quote
         fields = "__all__"
+
+
+class ActivityLogSerializer(serializers.ModelSerializer):
+
+    user = serializers.StringRelatedField()
+
+    class Meta:
+        model = ActivityLog
+
+        fields = [
+            "id",
+            "user",
+            "role",
+            "action",
+            "model_name",
+            "object_id",
+            "description",
+            "ip_address",
+            "details",
+            "timestamp",
+        ]

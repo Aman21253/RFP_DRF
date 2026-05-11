@@ -12,6 +12,7 @@ from .views_auth import (
 from .views_admin import (
     admin_create_rfp_api,
     admin_vendors_by_category_api,
+    activity_logs_api,
     categories_api,
     category_toggle_api,
     vendors_api,
@@ -50,6 +51,7 @@ urlpatterns = [
     path("admin/vendors/category/<int:category_id>/", admin_vendors_by_category_api),
     path("vendor/rfp/<int:rfp_id>/quote/", vendor_apply_quote_api),
     path("admin/rfp/create/", admin_create_rfp_api),
+    path("admin/activity-logs/", activity_logs_api),
 
     path("public/categories/", views_auth.public_categories_api, name="public-categories"),
     path("vendor/dashboard/", vendor_dashboard_api),

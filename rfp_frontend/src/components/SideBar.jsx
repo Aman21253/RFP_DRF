@@ -1,4 +1,4 @@
-import { LayoutDashboard, Tags, Users, FileText, BarChart3, LogOut } from "lucide-react";
+import { LayoutDashboard, Tags, Users, FileText, BarChart3, LogOut, Activity } from "lucide-react";
 
 export default function Sidebar({ active = "dashboard", setActive, onLogout }) {
   const itemClass = (key) =>
@@ -39,6 +39,11 @@ export default function Sidebar({ active = "dashboard", setActive, onLogout }) {
         <button onClick={() => setActive("reports")} className={itemClass("reports")}>
           <BarChart3 size={18} />
           Reports
+        </button>
+
+        <button onClick={() => setActive("activity-logs")} className={itemClass("activity-logs")}>
+          <Activity size={18} />
+          Activity Logs
         </button>
       </nav>
 

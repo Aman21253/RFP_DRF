@@ -31,7 +31,17 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
 EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = "noreply@example.com"
+
+# For real email delivery, replace the console backend and set SMTP settings:
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = "smtp.gmail.com"
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = "amanabbansal@gmail.com"
+EMAIL_HOST_PASSWORD = "ntavqnbolkfuknth"
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",

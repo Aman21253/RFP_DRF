@@ -1,5 +1,7 @@
 from django.db import models
-
+from django.contrib.auth.models import User
+from django.contrib.auth.hashers import make_password, check_password
+import random
 
 class Category(models.Model):
 
@@ -95,28 +97,164 @@ class QuoteItem(models.Model):
 
 
 class AuthConfig(models.Model):
-
     enable_vendor_2fa = models.BooleanField(default=True)
-
     otp_expiry_minutes = models.IntegerField(default=10)
 
     def __str__(self):
         return "Auth Configuration"
 
 
+class ActivityLog(models.Model):
+
+    class ActionType(models.TextChoices):
+        LOGIN_SUCCESS = "LOGIN_SUCCESS"
+        LOGIN_FAILED = "LOGIN_FAILED"
+        OTP_SENT = "OTP_SENT"
+        OTP_FAILED = "OTP_FAILED"
+        PASSWORD_RESET = "PASSWORD_RESET"
+        CATEGORY_CREATED = "CATEGORY_CREATED"
+        CATEGORY_UPDATED = "CATEGORY_UPDATED"
+        VENDOR_APPROVED = "VENDOR_APPROVED"
+        VENDOR_REJECTED = "VENDOR_REJECTED"
+        RFP_CREATED = "RFP_CREATED"
+        RFP_UPDATED = "RFP_UPDATED"
+
+    class Severity(models.TextChoices):
+        INFO = "INFO"
+        WARNING = "WARNING"
+        CRITICAL = "CRITICAL"
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    user_email = models.EmailField(
+        null=True,
+        blank=True
+    )
+
+    role = models.CharField(
+        max_length=30,
+        blank=True,
+        null=True
+    )
+
+    action = models.CharField(
+        max_length=100,
+        choices=ActionType.choices
+    )
+
+    severity = models.CharField(
+        max_length=20,
+        choices=Severity.choices,
+        default=Severity.INFO
+    )
+
+    model_name = models.CharField(
+        max_length=100
+    )
+
+    object_id = models.PositiveIntegerField()
+    endpoint = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    request_method = models.CharField(
+        max_length=10,
+        null=True,
+        blank=True
+    )
+
+    description = models.TextField(
+        blank=True,
+        null=True
+    )
+
+    ip_address = models.GenericIPAddressField(
+        null=True,
+        blank=True
+    )
+
+    details = models.JSONField(
+        null=True,
+        blank=True
+    )
+
+    timestamp = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    class Meta:
+        ordering = ["-timestamp"]
+        indexes = [
+            models.Index(fields=["timestamp"]),
+            models.Index(fields=["action"]),
+            models.Index(fields=["model_name"]),
+            models.Index(fields=["user"]),
+            models.Index(fields=["ip_address"]),
+        ]
+
+    def __str__(self):
+        return f"{self.action} - {self.model_name}"
+
 class LoginOTP(models.Model):
 
-    email = models.EmailField()
+    class OTPType(models.TextChoices):
 
-    otp = models.CharField(max_length=6)
+        LOGIN = "LOGIN"
 
-    created_at = models.DateTimeField(auto_now_add=True)
+        PASSWORD_RESET = "PASSWORD_RESET"
 
-    expires_at = models.DateTimeField()
+    email = models.EmailField(db_index=True)
 
+    otp = models.CharField(max_length=255)
+
+    otp_type = models.CharField(
+
+        max_length=30,
+
+        choices=OTPType.choices,
+
+        default=OTPType.LOGIN,
+
+    )
+
+    attempts = models.IntegerField(default=0)
+    max_attempts = models.IntegerField(default=5)
     is_used = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    expires_at = models.DateTimeField()
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(null=True, blank=True)
+
+    class Meta:
+
+        indexes = [
+
+            models.Index(fields=["email"]),
+
+            models.Index(fields=["expires_at"]),
+
+        ]
+
+    def __str__(self):
+
+        return f"{self.email} - {self.otp_type}"
 
     @staticmethod
+
     def generate_otp():
-        import random
         return str(random.randint(100000, 999999))
+
+    @staticmethod
+
+    def hash_otp(otp):
+        return make_password(otp)
+
+    def verify_otp(self, raw_otp):
+        return check_password(raw_otp, self.otp)

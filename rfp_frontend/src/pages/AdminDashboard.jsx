@@ -12,6 +12,7 @@ export default function AdminDashboard() {
   const [categories, setCategories] = useState([]);
   const [vendors, setVendors] = useState([]);
   const [rfps, setRfps] = useState([]);
+  const [activityLogs, setActivityLogs] = useState([]);
   const [newCategory, setNewCategory] = useState("");
   const [loading, setLoading] = useState(true);
 
@@ -19,17 +20,23 @@ export default function AdminDashboard() {
     try {
       setLoading(true);
 
-      const [reportsRes, categoriesRes, vendorsRes, rfpsRes] = await Promise.all([
+      const [reportsRes, categoriesRes, vendorsRes, rfpsRes, logsRes] = await Promise.all([
         API.get("admin/reports/"),
         API.get("admin/categories/"),
         API.get("admin/vendors/"),
         API.get("admin/rfp/"),
+        API.get("admin/activity-logs/"),
       ]);
 
       setReports(reportsRes.data);
       setCategories(categoriesRes.data);
       setVendors(vendorsRes.data);
       setRfps(rfpsRes.data);
+      setActivityLogs(
+        Array.isArray(logsRes.data)
+          ? logsRes.data
+          : logsRes.data.results || []
+      );
     } catch (error) {
       console.log("ADMIN LOAD ERROR:", error?.response?.data || error.message);
       navigate("/");
@@ -351,6 +358,51 @@ export default function AdminDashboard() {
                     value={reports?.closed_rfps || 0}
                     color="red"
                   />
+                </div>
+              </section>
+            )}
+
+            {activeSection === "activity-logs" && (
+              <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+                <h3 className="text-xl font-semibold text-slate-800">Activity Logs</h3>
+                <p className="mt-1 text-sm text-slate-500">Track user actions</p>
+
+                <div className="mt-5 overflow-x-auto">
+                  <table className="w-full border-separate border-spacing-y-3">
+                    <thead>
+                      <tr className="text-left text-sm text-slate-500">
+                        <th className="px-3">User</th>
+                        <th className="px-3">Action</th>
+                        <th className="px-3">Model</th>
+                        <th className="px-3">Object ID</th>
+                        <th className="px-3">Timestamp</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {activityLogs.length === 0 ? (
+                        <tr>
+                          <td colSpan="5" className="px-3 py-4 text-sm text-slate-500">
+                            No activity logs found.
+                          </td>
+                        </tr>
+                      ) : (
+                        Array.isArray(activityLogs) &&
+                        activityLogs.map((log) => (
+                          <tr key={log.id} className="rounded-xl bg-slate-50">
+                            <td className="rounded-l-xl px-3 py-4 font-medium text-slate-800">
+                              {log.user}
+                            </td>
+                            <td className="px-3 py-4 text-slate-600">{log.action}</td>
+                            <td className="px-3 py-4 text-slate-600">{log.model_name}</td>
+                            <td className="px-3 py-4 text-slate-600">{log.object_id}</td>
+                            <td className="rounded-r-xl px-3 py-4 text-slate-600">
+                              {new Date(log.timestamp).toLocaleString()}
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </section>
             )}
