@@ -39,6 +39,13 @@ class Vendor(models.Model):
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name="vendors")
 
     status = models.CharField(max_length=20, choices=ApprovalStatus.choices, default=ApprovalStatus.PENDING)
+    google_auth_enabled = models.BooleanField(default=False)
+
+    google_auth_secret = models.CharField(
+        max_length=64,
+        blank=True,
+        null=True
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
 

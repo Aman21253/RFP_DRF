@@ -1,5 +1,7 @@
 from pathlib import Path
 from datetime import timedelta
+import ssl
+import certifi
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -36,12 +38,14 @@ EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 DEFAULT_FROM_EMAIL = "noreply@example.com"
 
 # For real email delivery, replace the console backend and set SMTP settings:
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
 EMAIL_HOST = "smtp.gmail.com"
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = "amanabbansal@gmail.com"
 EMAIL_HOST_PASSWORD = "ntavqnbolkfuknth"
+EMAIL_SSL_CERTFILE = certifi.where()
+EMAIL_SSL_KEYFILE = None
 
 CSRF_TRUSTED_ORIGINS = [
     "http://localhost:5173",

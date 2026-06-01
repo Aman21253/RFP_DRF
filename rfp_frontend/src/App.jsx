@@ -5,6 +5,7 @@ import VendorDashboard from "./pages/VendorDashboard";
 import VendorRegister from "./pages/VendorRegister";
 import AdminDashboard from "./pages/AdminDashboard";
 import AddRFPPage from "./pages/AddRFPPage";
+import GoogleAuthLoginPage from "./pages/GoogleAuthLoginPage";
 
 function PrivateRoute({ children }) {
   const token = localStorage.getItem("access_token");
@@ -16,6 +17,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<LoginPage />} />
       <Route path="/otp" element={<OTPPage />} />
+      <Route path="/google-auth-login" element={<GoogleAuthLoginPage />} />
       <Route path="/vendor-register" element={<VendorRegister />} />
       <Route path="/add-rfp" element={<PrivateRoute><AddRFPPage /></PrivateRoute>} />
 

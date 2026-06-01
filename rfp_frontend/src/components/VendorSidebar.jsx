@@ -2,7 +2,7 @@ import {
   LayoutDashboard,
   FileText,
   ClipboardList,
-  Send,
+  ShieldCheck,
   LogOut,
 } from "lucide-react";
 
@@ -48,6 +48,14 @@ export default function VendorSidebar({
         >
           <ClipboardList size={18} />
           My Quotes
+        </button>
+
+        <button
+          onClick={() => setActive("security")}
+          className={itemClass("security")}
+        >
+          <ShieldCheck size={18} />
+          Security
         </button>
 
       </nav>

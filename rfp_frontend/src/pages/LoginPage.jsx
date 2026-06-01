@@ -20,12 +20,21 @@ export default function LoginPage() {
     try {
       const res = await API.post("auth/login/", form);
 
-      if (res.data.email) {
+      // Google Authenticator required
+      if (res.data.requires_google_auth) {
+        localStorage.setItem("pending_email", res.data.email);
+        navigate("/google-auth-login");
+        return;
+      }
+
+      // Email OTP required
+      if (res.data.email && !res.data.tokens) {
         localStorage.setItem("pending_email", res.data.email);
         navigate("/otp");
         return;
       }
 
+      // Direct login (admin or 2FA disabled)
       if (res.data.tokens?.access) {
         localStorage.setItem("access_token", res.data.tokens.access);
         localStorage.setItem("refresh_token", res.data.tokens.refresh);
