@@ -1,3 +1,5 @@
+from decimal import Decimal, InvalidOperation
+
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -8,7 +10,12 @@ from .models import Vendor, RFP, Quote
 
 def get_vendor_from_user(user):
     email = (user.email or user.username or "").strip().lower()
-    return Vendor.objects.filter(email=email).first()
+
+    vendor = Vendor.objects.filter(
+        email=email
+    ).first()
+
+    return vendor
 
 
 @api_view(["GET"])
@@ -29,10 +36,14 @@ def vendor_dashboard_api(request):
 
     assigned_rfps_count = RFP.objects.filter(
         status="OPEN",
-        assigned_vendors=vendor
+        assigned_vendors=vendor,
+        organization=vendor.organization
     ).count()
 
-    quotes_count = Quote.objects.filter(vendor=vendor).count()
+    quotes_count = Quote.objects.filter(
+        vendor=vendor,
+        organization=vendor.organization
+    ).count()
 
     data = {
         "vendor": {
@@ -68,8 +79,13 @@ def vendor_rfp_list_api(request):
         )
 
     rfps = (
+
         RFP.objects.select_related("category")
-        .filter(status="OPEN", assigned_vendors=vendor)
+        .filter(
+            status="OPEN",
+            assigned_vendors=vendor,
+            organization=vendor.organization
+        )
         .order_by("-id")
     )
 
@@ -107,7 +123,10 @@ def vendor_quotes_api(request):
 
     quotes = (
         Quote.objects.select_related("rfp", "rfp__category")
-        .filter(vendor=vendor)
+        .filter(
+            vendor=vendor,
+            organization=vendor.organization
+        )
         .order_by("-id")
     )
 
@@ -145,7 +164,8 @@ def vendor_apply_quote_api(request, rfp_id):
     rfp = RFP.objects.filter(
         id=rfp_id,
         status="OPEN",
-        assigned_vendors=vendor
+        assigned_vendors=vendor,
+        organization=vendor.organization
     ).first()
 
     if not rfp:
@@ -156,16 +176,31 @@ def vendor_apply_quote_api(request, rfp_id):
 
     amount = request.data.get("amount")
     remarks = request.data.get("remarks", "")
-
-    if not amount:
+    
+    if amount is None:
         return Response(
             {"error": "Amount is required."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    
+    try:
+        amount = Decimal(str(amount))
+    except (InvalidOperation, TypeError, ValueError):
+        return Response(
+            {"error": "Invalid amount."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    
+    if amount <= 0:
+        return Response(
+            {"error": "Amount must be greater than zero."},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
     quote, created = Quote.objects.get_or_create(
         rfp=rfp,
         vendor=vendor,
+        organization=vendor.organization,
         defaults={
             "amount": amount,
             "remarks": remarks,

@@ -12,6 +12,7 @@ from .views_auth import (
     setup_google_auth_api,
     verify_google_auth_api,
     google_login_verify_api,
+    organization_register_api,
 )
 
 from .views_admin import (
@@ -43,6 +44,7 @@ urlpatterns = [
     # =========================
 
     path("auth/register/", register_api),
+    path("auth/organization-register/", organization_register_api),
     path("auth/login/", login_api),
 
     path("auth/verify-otp/", verify_otp_api),
