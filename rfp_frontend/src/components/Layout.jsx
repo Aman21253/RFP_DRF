@@ -9,7 +9,6 @@ export default function Layout({ title, subtitle, right, children }) {
           </div>
           {right}
         </div>
-
         <div className="rounded-2xl bg-white p-6 shadow-sm">{children}</div>
       </div>
     </div>

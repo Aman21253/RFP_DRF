@@ -1,56 +1,65 @@
 import { useState } from "react";
 import API from "../api";
+import { ShieldCheck } from "lucide-react";
 
 export default function SetupGoogleAuth() {
-  const [qrCode, setQrCode] = useState("");
-  const [secret, setSecret] = useState("");
-  const [totpCode, setTotpCode] = useState("");
-  const [step, setStep] = useState("idle"); // idle | qr | done
-  const [error, setError] = useState("");
-  const [msg, setMsg] = useState("");
+  const [qrCode,    setQrCode]    = useState("");
+  const [secret,    setSecret]    = useState("");
+  const [totpCode,  setTotpCode]  = useState("");
+  const [step,      setStep]      = useState("idle");
+  const [error,     setError]     = useState("");
+  const [msg,       setMsg]       = useState("");
+  const [loading,   setLoading]   = useState(false);
 
   const startSetup = async () => {
     setError("");
+    setLoading(true);
     try {
       const res = await API.post("auth/setup-google-auth/");
       setQrCode(res.data.qr_code);
       setSecret(res.data.secret);
       setStep("qr");
     } catch (err) {
-      setError(err.response?.data?.error || "Setup failed");
+      setError(err.response?.data?.error || "Setup failed. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
   const confirmSetup = async () => {
     setError("");
+    setLoading(true);
     try {
-      const res = await API.post("auth/verify-google-auth/", {
-        totp_code: totpCode,
-      });
+      const res = await API.post("auth/verify-google-auth/", { totp_code: totpCode });
       setMsg(res.data.message);
       setStep("done");
     } catch (err) {
-      setError(err.response?.data?.error || "Verification failed");
+      setError(err.response?.data?.error || "Verification failed. Check the code and retry.");
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-md mx-auto bg-white rounded-2xl shadow p-6">
-      <h2 className="text-xl font-bold text-slate-800 mb-2">
-        Google Authenticator Setup
-      </h2>
-      <p className="text-slate-500 text-sm mb-6">
-        Enable TOTP-based 2FA using Google Authenticator for more secure logins.
-      </p>
+    <div className="max-w-md">
+      <div className="mb-6 flex items-center gap-3">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100">
+          <ShieldCheck size={20} className="text-blue-600" />
+        </div>
+        <div>
+          <h3 className="font-semibold text-slate-800">Google Authenticator</h3>
+          <p className="text-sm text-slate-500">TOTP-based two-factor authentication</p>
+        </div>
+      </div>
 
       {error && (
-        <div className="mb-4 rounded-lg bg-red-100 px-4 py-3 text-sm text-red-700">
+        <div className="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
         </div>
       )}
 
       {msg && (
-        <div className="mb-4 rounded-lg bg-green-100 px-4 py-3 text-sm text-green-700">
+        <div className="mb-4 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700">
           {msg}
         </div>
       )}
@@ -58,57 +67,66 @@ export default function SetupGoogleAuth() {
       {step === "idle" && (
         <button
           onClick={startSetup}
-          className="w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700"
+          disabled={loading}
+          className="w-full rounded-xl bg-blue-600 px-4 py-3 font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
         >
-          Setup Google Authenticator
+          {loading ? "Setting up..." : "Setup Google Authenticator"}
         </button>
       )}
 
       {step === "qr" && (
-        <div className="space-y-4">
-          <p className="text-sm text-slate-600">
-            1. Open the <strong>Google Authenticator</strong> app on your phone.
-            <br />
-            2. Tap <strong>+</strong> → <strong>Scan a QR code</strong>.
-            <br />
-            3. Scan the image below.
-          </p>
+        <div className="space-y-5">
+          <ol className="space-y-1 text-sm text-slate-600 list-decimal list-inside">
+            <li>Open <strong>Google Authenticator</strong> on your phone.</li>
+            <li>Tap <strong>+</strong> → <strong>Scan a QR code</strong>.</li>
+            <li>Scan the image below.</li>
+          </ol>
 
           <div className="flex justify-center">
-            <img src={qrCode} alt="QR Code" className="w-48 h-48 border rounded-lg" />
+            <img
+              src={qrCode}
+              alt="Google Auth QR Code"
+              className="h-48 w-48 rounded-xl border border-slate-200 p-1"
+            />
           </div>
 
-          <details className="text-xs text-slate-400">
-            <summary className="cursor-pointer">Can't scan? Enter manually</summary>
-            <p className="mt-1 font-mono break-all bg-slate-50 p-2 rounded">{secret}</p>
+          <details className="rounded-lg border border-slate-200 px-4 py-2 text-xs text-slate-500">
+            <summary className="cursor-pointer font-medium">Can't scan? Enter key manually</summary>
+            <p className="mt-2 break-all rounded bg-slate-50 p-2 font-mono">{secret}</p>
           </details>
 
-          <p className="text-sm text-slate-600 font-medium">
-            4. Enter the 6-digit code shown in the app to confirm:
-          </p>
-
-          <input
-            type="text"
-            placeholder="6-digit code"
-            value={totpCode}
-            onChange={(e) => setTotpCode(e.target.value)}
-            maxLength={6}
-            className="w-full rounded-xl border border-slate-300 px-4 py-3 outline-none focus:border-blue-500 text-center text-xl tracking-widest"
-          />
+          <div>
+            <label className="mb-2 block text-sm font-medium text-slate-700">
+              Enter the 6-digit code from the app to confirm
+            </label>
+            <input
+              type="text"
+              inputMode="numeric"
+              placeholder="000000"
+              value={totpCode}
+              onChange={(e) => setTotpCode(e.target.value.replace(/\D/g, ""))}
+              maxLength={6}
+              className="w-full rounded-xl border border-slate-300 px-4 py-3 text-center text-xl tracking-widest outline-none focus:border-blue-500"
+            />
+          </div>
 
           <button
             onClick={confirmSetup}
-            disabled={totpCode.length !== 6}
+            disabled={totpCode.length !== 6 || loading}
             className="w-full rounded-xl bg-green-600 px-4 py-3 font-semibold text-white hover:bg-green-700 disabled:opacity-60"
           >
-            Confirm & Enable
+            {loading ? "Verifying..." : "Confirm & Enable"}
           </button>
         </div>
       )}
 
       {step === "done" && (
-        <div className="text-center text-green-700 font-semibold">
-          ✅ Google Authenticator is now active on your account!
+        <div className="rounded-xl bg-green-50 px-6 py-5 text-center">
+          <div className="text-3xl mb-2">✅</div>
+          <p className="font-semibold text-green-800">Google Authenticator is active!</p>
+          <p className="mt-1 text-sm text-green-700">
+            You'll be prompted for a TOTP code on your next login.
+          </p>
         </div>
       )}
     </div>
